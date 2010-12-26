@@ -200,7 +200,15 @@ integer_end(Stream, Acc, NewLines, Chars) ->
 
 -spec float_end(string(), string(), integer(), integer()) -> number_result().
 float_end(Stream, Acc, NewLines, Chars) ->
-    {list_to_float(lists:reverse(Acc)), Stream, {NewLines, Chars}}.
+    {get_float(lists:reverse(Acc)), Stream, {NewLines, Chars}}.
+
+get_float(L) ->
+    try
+        list_to_float(L)
+    catch
+        error:badarg ->
+            throw({bad_float, L})
+    end.
 
 -spec digit_next(string(), string(), front | decimal | exponent,
 		 integer(), integer()) -> number_result().
