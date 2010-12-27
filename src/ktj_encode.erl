@@ -97,7 +97,7 @@ encode(Data) when is_atom(Data)->
 %% @end
 -spec encode_string(ktj_string()) -> string().
 encode_string(Value) when is_binary(Value) ->
-    [$\", escape_string(binary_to_list(Value), []), $\"];
+    [$\", escape_string(unicode:characters_to_list(Value), []), $\"];
 encode_string(Value) when is_atom(Value) ->
     [$\", escape_string(atom_to_list(Value), []), $\"];
 encode_string(Value) when is_list(Value) ->
