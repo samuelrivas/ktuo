@@ -169,8 +169,17 @@ parse_hex_digit([$f | T], Acc, HexAcc, Delim, NewLines, Chars)
 parse_hex_digit(Stream, Acc, HexAcc, Delim, NewLines, Chars)
   when length(HexAcc) == 4 ->
     [D1, D2, D3, D4] = HexAcc,
-    Char = hexlist_to_integer([D4, D3, D2, D1]),
-    stringish_body(Delim, Stream, [Char | Acc], NewLines, Chars).
+    CodePoint = hexlist_to_integer([D4, D3, D2, D1]),
+    stringish_body(Delim, Stream, [utf8_bytes(CodePoint) | Acc], NewLines, Chars).
+
+% XXX Is there a better way to utf8-encode a unicode codepoint?
+utf8_bytes(CodePoint) ->
+    case unicode:characters_to_binary([CodePoint]) of
+        {error, _, _} ->
+            erlang:error({bad_unicode_codepoint, CodePoint});
+        Bin ->
+            binary_to_list(Bin)
+    end.
 
 -spec decimal(string(), string(), integer(), integer()) -> number_result().
 decimal([$.| T], Acc, NewLines, Chars) when length(T) > 0 ->
@@ -296,6 +305,8 @@ string_test() ->
     ?assertMatch({<<"Hello\t World">>, [], {0, 14}},
                  stringish_body($\", "Hello\t World\"", [], 0, 1)),
     ?assertMatch({<<"Hello% World">>, [], {0, 19}},
-                 stringish_body($\", "Hello\\u0025 World\"", [], 0, 1)).
+                 stringish_body($\", "Hello\\u0025 World\"", [], 0, 1)),
+    ?assertEqual({<<"Hello", <<196,128>>/binary, " World">>, [], {0, 19}},
+                 stringish_body($\", "Hello\\u0100 World\"", [], 0, 1)).
 
 
